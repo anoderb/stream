@@ -8,7 +8,327 @@
   <title>Nobaryu — Nonton Bareng Sport Live</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <style>
+:root {
+  --bg: #080b12;
+  --bg2: #0e1120;
+  --surface: rgba(18, 22, 36, 0.85);
+  --card: rgba(16, 20, 32, 0.92);
+  --card2: #141828;
+  --text: #f0f2f7;
+  --muted: #6b7490;
+  --muted2: #9099b2;
+  --line: rgba(255,255,255,0.07);
+  --line2: rgba(255,255,255,0.12);
+  --accent: #e8ff47;
+  --accent-dim: rgba(232,255,71,0.12);
+  --accent-glow: rgba(232,255,71,0.25);
+  --blue: #3d7fff;
+  --blue-dim: rgba(61,127,255,0.15);
+  --live: #ff4b55;
+  --live-dim: rgba(255,75,85,0.15);
+  --upcoming: #f5a623;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 8px 40px rgba(0,0,0,0.45);
+}
+[data-theme="light"] {
+  --bg: #f3f5fa;
+  --bg2: #e8ecf5;
+  --surface: rgba(255,255,255,0.82);
+  --card: rgba(255,255,255,0.9);
+  --card2: #edf0fa;
+  --text: #0d1020;
+  --muted: #717a9c;
+  --muted2: #5a6380;
+  --line: rgba(10,20,60,0.09);
+  --line2: rgba(10,20,60,0.15);
+  --accent: #c5d800;
+  --accent-dim: rgba(197,216,0,0.12);
+  --accent-glow: rgba(197,216,0,0.22);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; color: inherit; background: none; border: none; }
+a { color: inherit; text-decoration: none; }
+
+/* NOISE TEXTURE */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* LAYOUT */
+.wrap { width: min(1200px, 100%); margin: auto; padding: 0 20px; position: relative; z-index: 1; }
+
+/* NAV */
+.nav-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  background: rgba(8,11,18,0.82);
+  border-bottom: 1px solid var(--line);
+}
+[data-theme="light"] .nav-wrap { background: rgba(243,245,250,0.88); }
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 60px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logo-mark svg { width: 20px; height: 20px; }
+.brand-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+.brand-name span { color: var(--accent); }
+.nav-actions { display: flex; gap: 8px; align-items: center; }
+.icon-btn {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line2);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  transition: 0.18s;
+  color: var(--muted2);
+}
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.refresh-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #080b12;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex; align-items: center; gap: 6px;
+  transition: 0.18s;
+}
+.refresh-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+/* HERO */
+.hero { padding: 40px 0 24px; }
+.hero-inner { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start; }
+.hero-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--live);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.75); }
+}
+.hero-eyebrow span { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); }
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: clamp(32px, 6vw, 58px);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero-desc { color: var(--muted2); font-size: 15px; line-height: 1.6; max-width: 520px; }
+
+/* STATS */
+.stats-row { display: flex; gap: 20px; padding-top: 6px; }
+.stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: -0.04em; line-height: 1; color: var(--text); }
+.stat-label { font-size: 11px; font-weight: 500; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-divider { width: 1px; background: var(--line2); align-self: stretch; }
+
+/* SEARCH */
+.search-row { padding: 20px 0 0; display: flex; gap: 8px; align-items: center; }
+.search-wrap { flex: 1; position: relative; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px 11px 40px;
+  color: var(--text);
+  outline: none;
+  transition: 0.18s;
+  font-size: 14px;
+}
+.search-input::placeholder { color: var(--muted); }
+.search-input:focus { border-color: var(--accent); background: var(--card); }
+.clear-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line2);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  transition: 0.18s;
+}
+.clear-btn:hover { border-color: var(--live); color: var(--live); }
+
+/* META */
+.meta-bar { padding: 10px 0 0; font-size: 12px; color: var(--muted); font-weight: 500; }
+
+/* CATEGORIES — WRAP, NO SCROLL */
+.cats-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 16px 0 2px;
+}
+.cat-pill {
+  white-space: nowrap;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line2);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted2);
+  transition: 0.15s;
+}
+.cat-pill:hover { border-color: var(--line2); color: var(--text); }
+.cat-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #080b12;
+}
+
+/* SECTION HEADER */
+.section-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 14px; }
+.section-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: -0.02em; }
+.section-count { font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line2); padding: 3px 10px; border-radius: 999px; }
+
+/* GRID */
+.events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; padding-bottom: 60px; }
+
+/* CARD */
+.event-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.event-card:hover { transform: translateY(-3px); border-color: var(--line2); box-shadow: var(--shadow); }
+
+/* POSTER */
+.card-poster {
+  height: 150px;
+  position: relative;
+  background: linear-gradient(135deg, #111624, #1a2038);
+  overflow: hidden;
+}
+.card-poster img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.75; }
+.card-poster::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,13,22,0.9) 0%, transparent 55%); }
+.poster-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--line2); }
+
+/* BADGES */
+.badge-row { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 2; }
+.badge { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.badge-cat { background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+.badge-live { background: var(--live-dim); border: 1px solid var(--live); color: var(--live); }
+.badge-upcoming { background: rgba(245,166,35,0.15); border: 1px solid var(--upcoming); color: var(--upcoming); }
+.badge-ended { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--muted); }
+
+/* CARD BODY */
+.card-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.card-league { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.card-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: -0.02em; line-height: 1.25; color: var(--text); }
+.card-meta { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted2); padding-top: 6px; border-top: 1px solid var(--line); margin-top: auto; }
+.card-meta-time { display: flex; align-items: center; gap: 5px; }
+.card-meta-servers { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.server-dots { display: flex; gap: 3px; }
+.server-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.server-dot.active { background: var(--accent); }
+.watch-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 11px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 14px;
+  transition: 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.watch-btn.can-watch { background: var(--accent); color: #080b12; }
+.watch-btn.can-watch:hover { opacity: 0.88; transform: translateY(-1px); }
+.watch-btn.no-server { background: var(--surface); border: 1px solid var(--line2); color: var(--muted); cursor: not-allowed; }
+
+/* EMPTY / LOADING / ERROR */
+.state-msg { grid-column: 1 / -1; text-align: center; padding: 60px 24px; color: var(--muted); border: 1px dashed var(--line2); border-radius: var(--radius); background: var(--surface); }
+.state-msg p { margin-top: 10px; font-size: 14px; }
+.skeleton { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); height: 300px; overflow: hidden; position: relative; }
+.skeleton::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(4,6,12,0.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.player-sheet { width: min(960px, 100%); background: var(--card2); border: 1px solid var(--line2); border-radius: 20px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.7); }
+.player-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--card); }
+.player-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: -0.02em; }
+.player-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.player-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--muted2); font-size: 14px; flex-shrink: 0; transition: 0.15s; }
+.player-close:hover { border-color: var(--live); color: var(--live); }
+.frame-wrap { aspect-ratio: 16/9; background: #000; }
+.frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+.player-foot { padding: 12px 16px; border-top: 1px solid var(--line); background: var(--card); }
+.server-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+.server-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.server-tab { padding: 6px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; border: 1px solid var(--line2); background: var(--surface); color: var(--muted2); transition: 0.15s; }
+.server-tab.active { background: var(--accent); border-color: var(--accent); color: #080b12; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(8px); opacity: 0; pointer-events: none; background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; z-index: 200; transition: 0.22s; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* MOBILE */
+@media (max-width: 640px) {
+  .hero-inner { grid-template-columns: 1fr; }
+  .stats-row { gap: 14px; }
+  .stat-num { font-size: 22px; }
+  .hero h1 { font-size: 30px; }
+  .events-grid { grid-template-columns: 1fr; }
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .player-sheet { border-radius: 20px 20px 0 0; max-height: 92vh; overflow-y: auto; }
+  .frame-wrap { aspect-ratio: 16/10; }
+  .brand-name { font-size: 18px; }
+}
+
+</style>
 </head>
 <body>
 
@@ -97,6 +417,312 @@
       <!-- GRID -->
       <div class="events-grid" id="grid">
         <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL PLAYER -->
+  <div class="modal-overlay" id="modal" aria-hidden="true">
+    <div class="player-sheet">
+      <div class="player-head">
+        <div class="player-info">
+          <div class="player-title" id="playerTitle">Player</div>
+          <div class="player-sub" id="playerSub"></div>
+        </div>
+        <button class="player-close" id="closeBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="frame-wrap"><iframe id="frame" allowfullscreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+      <div class="player-foot">
+        <div class="server-label">Pilih Server</div>
+        <div class="server-tabs" id="serverTabs"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+(() => {
+  const API = 'https://api.esportex.site/api/streams';
+  const CATS = ['all','football','basketball','race','badminton','tennis','fight','amfootball','baseball','volleyball','hockey','rugby','cricket','other'];
+  const LABEL = {all:'Semua',football:'⚽ Sepak Bola',basketball:'🏀 Basket',race:'🏎 Race',badminton:'🏸 Badminton',tennis:'🎾 Tennis',fight:'🥊 Fight',amfootball:'🏈 NFL',baseball:'⚾ Baseball',volleyball:'🏐 Voli',hockey:'🏒 Hockey',rugby:'🏉 Rugby',cricket:'🏏 Cricket',other:'Lainnya'};
+  const LABEL_SHORT = {all:'Semua',football:'Football',basketball:'Basket',race:'Race',badminton:'Badminton',tennis:'Tennis',fight:'Fight',amfootball:'NFL',baseball:'Baseball',volleyball:'Voli',hockey:'Hockey',rugby:'Rugby',cricket:'Cricket',other:'Lainnya'};
+
+  const $ = s => document.querySelector(s);
+  const grid = $('#grid'), catsEl = $('#cats'), searchEl = $('#search'), metaEl = $('#meta'), toastEl = $('#toast');
+  let rows = [], cat = 'all', q = '', lastFetch = 0, lastUpdate = null;
+
+  const esc = s => {
+    if (!s) return '';
+    const d = {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'};
+    return String(s).replace(/[&<>'"]/g, c => d[c]);
+  };
+  const parse = t => t ? new Date(t.replace(' ', 'T') + '+07:00') : null;
+  const statusOf = m => {
+    const n = new Date(), a = parse(m.kickoff), b = parse(m.endTime);
+    if (a && n < a) return 'upcoming';
+    if (a && b && n >= a && n <= b) return 'live';
+    return 'ended';
+  };
+  const fmtTime = t => {
+    const d = parse(t);
+    if (!d) return '—';
+    return new Intl.DateTimeFormat('id-ID', { weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jakarta' }).format(d) + ' WIB';
+  };
+  const showToast = msg => {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 2400);
+  };
+
+  function slugify(str) {
+    return (str||'')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g,'')
+      .replace(/[\s]+/g,'-')
+      .replace(/-+/g,'-')
+      .trim() || 'match';
+  }
+
+  function renderCats() {
+    catsEl.innerHTML = CATS.map(c =>
+      `<button class="cat-pill ${c === cat ? 'active' : ''}" data-cat="${c}">${LABEL[c]}</button>`
+    ).join('');
+  }
+
+  function filtered() {
+    return rows.filter(m =>
+      (cat === 'all' || m.category === cat) &&
+      `${m.tag} ${m.league} ${m.category}`.toLowerCase().includes(q.toLowerCase())
+    );
+  }
+
+  function renderStats(data) {
+    const live = rows.filter(m => statusOf(m) === 'live').length;
+    const up = rows.filter(m => statusOf(m) === 'upcoming').length;
+    $('#sLive').textContent = live;
+    $('#sUpcoming').textContent = up;
+    $('#sTotal').textContent = rows.length;
+    $('#sCount').textContent = `${data.length} event`;
+    metaEl.textContent = lastUpdate ? `Update ${lastUpdate.toLocaleTimeString('id-ID')} · ${rows.length} event` : 'Siap';
+  }
+
+  function serverDots(count) {
+    return Array.from({length: Math.min(count, 5)}, () =>
+      '<div class="server-dot active"></div>'
+    ).join('');
+  }
+
+  function render() {
+    renderCats();
+    const data = filtered();
+    renderStats(data);
+    if (!data.length) {
+      grid.innerHTML = `<div class="state-msg">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);margin:auto"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>Tidak ada event yang cocok.</p>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = data.map((m, i) => {
+      const st = statusOf(m);
+      const can = m.iframes && m.iframes.length;
+      const serverCount = can ? m.iframes.length : 0;
+      const slug = slugify(m.tag) + '-' + i;
+      const badgeSt = st === 'live' ? '<span class="badge badge-live">🔴 Live</span>' :
+                      st === 'upcoming' ? '<span class="badge badge-upcoming">⏰ Upcoming</span>' :
+                      '<span class="badge badge-ended">Selesai</span>';
+      return `<article class="event-card" data-slug="${esc(slug)}">
+        <div class="card-poster">
+          ${m.poster
+            ? `<img src="${esc(m.poster)}" loading="lazy" alt="${esc(m.tag)}" onerror="this.parentNode.querySelector('.poster-placeholder').style.display='flex';this.remove()">`
+            : ''}
+          <div class="poster-placeholder" style="${m.poster ? 'display:none' : 'display:flex'}">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <div class="badge-row">
+            <span class="badge badge-cat">${esc(LABEL_SHORT[m.category] || m.category)}</span>
+            ${badgeSt}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-league">${esc(m.league || 'Unknown League')}</div>
+          <div class="card-title">${esc(m.tag)}</div>
+          <div class="card-meta">
+            <div class="card-meta-time">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${fmtTime(m.kickoff)}
+            </div>
+            <div class="card-meta-servers">
+              <div class="server-dots">${serverDots(serverCount)}</div>
+              ${serverCount} server
+            </div>
+          </div>
+          <button class="watch-btn ${can ? 'can-watch' : 'no-server'}" ${can ? '' : 'disabled'} data-idx="${i}">
+            ${can
+              ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Tonton Sekarang'
+              : 'Belum tersedia'}
+          </button>
+        </div>
+      </article>`;
+    }).join('');
+
+    grid.querySelectorAll('.can-watch').forEach(btn => {
+      btn.onclick = () => {
+        const match = data[+btn.dataset.idx];
+        const slug = slugify(match.tag) + '-' + btn.dataset.idx;
+        history.pushState({slug, idx: +btn.dataset.idx}, '', '#' + slug);
+        openPlayer(match);
+      };
+    });
+
+    // card click → go to slug
+    grid.querySelectorAll('.event-card').forEach(card => {
+      card.addEventListener('click', e => {
+        if (e.target.closest('button')) return;
+        const slug = card.dataset.slug;
+        const m = data.find((x,i) => slugify(x.tag)+'-'+i === slug);
+        if (m && m.iframes && m.iframes.length) {
+          history.pushState({slug, idx: data.indexOf(m)}, '', '#' + slug);
+          openPlayer(m);
+        }
+      });
+    });
+  }
+
+  async function load(force = false) {
+    const now = Date.now();
+    if (!force && now - lastFetch < 30000 && lastFetch) {
+      showToast(`Cooldown ${Math.ceil((30000 - (now - lastFetch)) / 1000)}s lagi`);
+      return;
+    }
+    lastFetch = now;
+    grid.innerHTML = Array(3).fill('<div class="skeleton"></div>').join('');
+    metaEl.textContent = 'Mengambil data...';
+    try {
+      const r = await fetch(API + '?_=' + now);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      rows = [];
+      for (const c of CATS.filter(x => x !== 'all')) {
+        (d[c] || []).forEach(m => rows.push({ ...m, category: c }));
+      }
+      rows.sort((a, b) => (parse(a.kickoff) || 0) - (parse(b.kickoff) || 0));
+      lastUpdate = new Date();
+      render();
+
+      // check hash for deep link
+      checkHash();
+    } catch (e) {
+      console.error(e);
+      grid.innerHTML = `<div class="state-msg">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);margin:auto"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>Gagal memuat data. <button onclick="location.reload()" style="color:var(--accent);font-weight:700;background:none;border:none;cursor:pointer">Coba lagi →</button></p>
+      </div>`;
+      metaEl.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  function checkHash() {
+    const h = location.hash.slice(1);
+    if (!h || !rows.length) return;
+    const m = rows.find((x,i) => slugify(x.tag)+'-'+i === h);
+    if (m && m.iframes && m.iframes.length) {
+      cat = m.category;
+      render();
+      setTimeout(() => openPlayer(m), 300);
+    }
+  }
+
+  let activeIframes = [];
+  function openPlayer(m) {
+    const modal = $('#modal');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    $('#playerTitle').textContent = m.tag;
+    $('#playerSub').textContent = `${m.league || ''} · ${fmtTime(m.kickoff)}`;
+    activeIframes = m.iframes || [];
+    renderServerTabs(0);
+  }
+
+  function renderServerTabs(activeIdx) {
+    const tabs = $('#serverTabs');
+    tabs.innerHTML = activeIframes.map((s, i) =>
+      `<button class="server-tab ${i === activeIdx ? 'active' : ''}" data-i="${i}">${esc(s.server || ('Server ' + (i + 1)))}</button>`
+    ).join('');
+    tabs.querySelectorAll('.server-tab').forEach(tab => {
+      tab.onclick = () => {
+        const i = +tab.dataset.i;
+        setFrame(activeIframes[i]?.url);
+        renderServerTabs(i);
+      };
+    });
+    if (activeIframes[activeIdx]) setFrame(activeIframes[activeIdx].url);
+  }
+
+  function setFrame(url) { $('#frame').src = url || 'about:blank'; }
+
+  function closeModal() {
+    setFrame('about:blank');
+    $('#modal').classList.remove('open');
+    $('#modal').setAttribute('aria-hidden', 'true');
+    history.pushState({}, '', location.pathname);
+  }
+
+  // Events
+  catsEl.onclick = e => {
+    if (e.target.matches('.cat-pill')) { cat = e.target.dataset.cat; q = ''; searchEl.value = ''; render(); }
+  };
+  let debounce;
+  searchEl.oninput = e => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => { q = e.target.value.trim(); render(); }, 150);
+  };
+  $('#clearBtn').onclick = () => { searchEl.value = ''; q = ''; render(); };
+  $('#refreshBtn').onclick = () => load(false);
+  $('#topRefresh').onclick = () => load(false);
+  $('#closeBtn').onclick = closeModal;
+  $('#modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
+  document.onkeydown = e => { if (e.key === 'Escape') closeModal(); };
+  window.onpopstate = () => {
+    if (location.hash) {
+      closeModal();
+      checkHash();
+    } else {
+      closeModal();
+    }
+  };
+
+  // Theme
+  const saved = localStorage.getItem('nobaryu-theme') || 'dark';
+  document.documentElement.dataset.theme = saved;
+  updateThemeIcon(saved);
+  $('#themeBtn').onclick = () => {
+    const n = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = n;
+    localStorage.setItem('nobaryu-theme', n);
+    updateThemeIcon(n);
+  };
+  function updateThemeIcon(theme) {
+    const icon = $('#themeIcon');
+    if (theme === 'dark') {
+      icon.setAttribute('d', 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z');
+    } else {
+      icon.setAttribute('d', 'M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 1 0 0 10A5 5 0 0 0 12 7z');
+    }
+  }
+
+  load(true);
+})();
+
+</script>
+</body>
+</html>
         <div class="skeleton"></div>
         <div class="skeleton"></div>
       </div>
