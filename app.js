@@ -8,7 +8,7 @@
   const grid = $('#grid'), catsEl = $('#cats'), searchEl = $('#search'), metaEl = $('#meta'), toastEl = $('#toast');
   let rows = [], cat = 'all', q = '', lastFetch = 0, lastUpdate = null;
 
-  // 🔒 Redirect guard — blokir iframe yg coba navigasi top ke domain judol
+  // 🔒 Redirect guard — 3 lapis anti redirect judol
   const blockedDomains = [
     'slot','togel','casino','gacor','maxwin','judol','judii',
     'bonus','deposit','bandar','poker','domino','qq',
@@ -18,19 +18,46 @@
   ];
   let guardTimer = null;
   function activateGuard() {
+    // Lapis 1 — polling tiap 200ms
     if (guardTimer) clearInterval(guardTimer);
     const origUrl = location.href;
+    const origOrigin = location.origin;
     guardTimer = setInterval(() => {
       if (location.href !== origUrl && blockedDomains.some(k => location.href.toLowerCase().includes(k))) {
         history.replaceState(null, '', origUrl);
-        showToast('⚠️ Redirect ke judol diblokir!');
-        clearInterval(guardTimer);
-        guardTimer = null;
+        showToast('⚠️ Redirect diblokir!');
+        return;
+      }
+      // Juga catch redirect ke domain LAIN (bukan nobaryu)
+      if (location.origin !== origOrigin && location.origin !== 'https://www.nobaryu.biz.id' && !location.href.startsWith(origOrigin)) {
+        history.replaceState(null, '', origUrl);
+        showToast('⚠️ Redirect ke situs luar diblokir!');
+        return;
       }
     }, 200);
-    setTimeout(() => { 
-      if (guardTimer) { clearInterval(guardTimer); guardTimer = null; }
-    }, 15000);
+
+    // Lapis 2 — tangkep popstate (back setelah redirect)
+    const onPop = () => {
+      if (location.href !== origUrl && blockedDomains.some(k => location.href.toLowerCase().includes(k))) {
+        history.replaceState(null, '', origUrl);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+
+    // Lapis 3 — beforeunload: konfirmasi kalo user mau keluar
+    const onUnload = e => {
+      if (document.getElementById('modal')?.classList.contains('open')) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', onUnload);
+
+    // Simpan cleanup listeners di global buat closeModal pake
+    window._guardCleanup = () => {
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('beforeunload', onUnload);
+    };
   }
 
   const esc = s => {
@@ -259,7 +286,9 @@
     $('#frame').src = url || 'about:blank';
   }
 
-  function closeModal() {
+function closeModal() {
+    if (guardTimer) { clearInterval(guardTimer); guardTimer = null; }
+    if (window._guardCleanup) { window._guardCleanup(); window._guardCleanup = null; }
     setFrame('about:blank');
     $('#modal').classList.remove('open');
     $('#modal').setAttribute('aria-hidden', 'true');
