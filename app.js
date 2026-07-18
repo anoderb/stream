@@ -8,6 +8,31 @@
   const grid = $('#grid'), catsEl = $('#cats'), searchEl = $('#search'), metaEl = $('#meta'), toastEl = $('#toast');
   let rows = [], cat = 'all', q = '', lastFetch = 0, lastUpdate = null;
 
+  // 🔒 Redirect guard — blokir iframe yg coba navigasi top ke domain judol
+  const blockedDomains = [
+    'slot','togel','casino','gacor','maxwin','judol','judii',
+    'bonus','deposit','bandar','poker','domino','qq',
+    'betting','sbotop','ibcbet','s128','sv388',
+    'bossmahjong2.games','tonicgoverness.com','exclusive-spin.com',
+    'omg10.com','ay267.com',
+  ];
+  let guardTimer = null;
+  function activateGuard() {
+    if (guardTimer) clearInterval(guardTimer);
+    const origUrl = location.href;
+    guardTimer = setInterval(() => {
+      if (location.href !== origUrl && blockedDomains.some(k => location.href.toLowerCase().includes(k))) {
+        history.replaceState(null, '', origUrl);
+        showToast('⚠️ Redirect ke judol diblokir!');
+        clearInterval(guardTimer);
+        guardTimer = null;
+      }
+    }, 200);
+    setTimeout(() => { 
+      if (guardTimer) { clearInterval(guardTimer); guardTimer = null; }
+    }, 15000);
+  }
+
   const esc = s => {
     if (!s) return '';
     const d = {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'};
@@ -192,6 +217,7 @@
 
   let activeIframes = [];
   function openPlayer(m) {
+    activateGuard(); // 🔒 aktifin redirect guard
     const modal = $('#modal');
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
