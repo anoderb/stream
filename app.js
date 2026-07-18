@@ -216,7 +216,20 @@
     if (activeIframes[activeIdx]) setFrame(activeIframes[activeIdx].url);
   }
 
-  function setFrame(url) { $('#frame').src = url || 'about:blank'; }
+  function setFrame(url) {
+    // Blokir domain judol & iklan
+    const blocked = [
+      'slot','togel','casino','gacor','maxwin','judol','judii',
+      'bonus','deposit','bandar','poker','domino','qq',
+      'betting','sbotop','ibcbet','s128','sv388',
+    ];
+    if (url && blocked.some(k => url.toLowerCase().includes(k))) {
+      showToast('⚠️ Server ini tidak tersedia. Coba server lain.');
+      console.warn('Blocked suspicious URL:', url);
+      return;
+    }
+    $('#frame').src = url || 'about:blank';
+  }
 
   function closeModal() {
     setFrame('about:blank');
