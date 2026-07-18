@@ -222,6 +222,8 @@
       'slot','togel','casino','gacor','maxwin','judol','judii',
       'bonus','deposit','bandar','poker','domino','qq',
       'betting','sbotop','ibcbet','s128','sv388',
+      'bossmahjong2.games','tonicgoverness.com','exclusive-spin.com',
+      'omg10.com','ay267.com',
     ];
     if (url && blocked.some(k => url.toLowerCase().includes(k))) {
       showToast('⚠️ Server ini tidak tersedia. Coba server lain.');
