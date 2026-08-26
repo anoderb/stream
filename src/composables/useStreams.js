@@ -1,22 +1,24 @@
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { fetchStreams, statusOf, slugify } from '../services/api'
 
-// ===== useStreams: data, filter, search, auto-refresh =====
-const COOLDOWN = 30000 // refresh manual cooldown (ms)
-const AUTO_REFRESH = 60000 // auto-refresh (ms)
+// ===== useStreams: singleton state dipakai semua halaman =====
+
+const COOLDOWN = 30000
+const AUTO_REFRESH = 60000
+
+// module-level state → satu instance data di seluruh app
+const rows = ref([])
+const cat = ref('all')
+const q = ref('')
+const loading = ref(true)
+const error = ref(null)
+const updating = ref(false)
+const lastFetch = ref(0)
+const lastUpdate = ref(null)
+
+let autoTimer = null
 
 export function useStreams() {
-  const rows = ref([])
-  const cat = ref('all')
-  const q = ref('')
-  const loading = ref(true)
-  const error = ref(null)
-  const updating = ref(false)
-  const lastFetch = ref(0)
-  const lastUpdate = ref(null)
-
-  let autoTimer = null
-
   const filtered = computed(() => {
     const needle = q.value.trim().toLowerCase()
     return rows.value.filter(m => {
@@ -35,6 +37,22 @@ export function useStreams() {
     upcoming: rows.value.filter(m => statusOf(m) === 'upcoming').length,
     total: rows.value.length,
   }))
+
+  const byCategory = computed(() => {
+    const map = {}
+    for (const m of rows.value) {
+      map[m.category] = (map[m.category] || 0) + 1
+    }
+    return map
+  })
+
+  const leagues = computed(() => {
+    const s = new Set()
+    for (const m of rows.value) {
+      if (m.league) s.add(m.league)
+    }
+    return [...s].sort()
+  })
 
   async function load(force = false) {
     const now = Date.now()
@@ -70,22 +88,24 @@ export function useStreams() {
     }
   }
 
-  // deep link — buka player langsung dari #slug
   function findMatchByHash() {
     const h = location.hash.slice(1)
     if (!h || !rows.value.length) return null
     return rows.value.find((x, i) => slugify(x.tag) + '-' + i === h) || null
   }
 
-  onMounted(() => {
+  function findMatchBySlug(slug) {
+    return rows.value.find((x, i) => slugify(x.tag) + '-' + i === slug) || null
+  }
+
+  if (!autoTimer) {
     load(true)
     startAutoRefresh()
-  })
-  onUnmounted(stopAutoRefresh)
+  }
 
   return {
     rows, cat, q, loading, error, updating, lastUpdate, stats,
-    filtered, liveRows, upcomingRows, endedRows,
-    load, findMatchByHash,
+    filtered, liveRows, upcomingRows, endedRows, byCategory, leagues,
+    load, findMatchByHash, findMatchBySlug,
   }
 }
