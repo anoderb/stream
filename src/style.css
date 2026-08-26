@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* ============ THEME TOKENS (dark default) ============ */
+:root {
+  --bg: #080b12;
+  --bg2: #0e1120;
+  --surface: rgba(18, 22, 36, 0.85);
+  --card: rgba(16, 20, 32, 0.92);
+  --card2: #141828;
+  --text: #f0f2f7;
+  --muted: #6b7490;
+  --muted2: #9099b2;
+  --line: rgba(255, 255, 255, 0.07);
+  --line2: rgba(255, 255, 255, 0.12);
+  --accent: #e8ff47;
+  --accent-dim: rgba(232, 255, 71, 0.12);
+  --accent-glow: rgba(232, 255, 71, 0.25);
+  --blue: #3d7fff;
+  --blue-dim: rgba(61, 127, 255, 0.15);
+  --live: #ff4b55;
+  --live-dim: rgba(255, 75, 85, 0.15);
+  --upcoming: #f5a623;
+  --upcoming-dim: rgba(245, 166, 35, 0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] {
+  --bg: #f3f5fa;
+  --bg2: #e8ecf5;
+  --surface: rgba(255, 255, 255, 0.82);
+  --card: rgba(255, 255, 255, 0.9);
+  --card2: #edf0fa;
+  --text: #0d1020;
+  --muted: #717a9c;
+  --muted2: #5a6380;
+  --line: rgba(10, 20, 60, 0.09);
+  --line2: rgba(10, 20, 60, 0.15);
+  --accent: #c5d800;
+  --accent-dim: rgba(197, 216, 0, 0.12);
+  --accent-glow: rgba(197, 216, 0, 0.22);
+  --shadow: 0 8px 40px rgba(10, 20, 60, 0.08);
+}
+
+/* ============ BASE ============ */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent);
+  color: #080b12;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+svg {
+  display: block;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* ============ UTIL LAYERS ============ */
+.font-syne {
+  font-family: 'Syne', sans-serif;
+}
+
+/* scrollbar tipis + sembunyi saat idle (chips horizontal) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* skeleton shimmer */
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.skeleton {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+/* pulse for live dot */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.7);
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+/* safe-area untuk iOS bottom sheet */
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
