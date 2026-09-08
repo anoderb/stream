@@ -27,7 +27,7 @@ function fmtDay(t) {
 }
 
 function goWatch(m) {
-  router.push('/watch/' + slugify(m.tag) + '-' + rows.value.indexOf(m))
+  router.push('/watch/' + m.slug)
 }
 </script>
 

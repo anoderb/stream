@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStreams } from '../composables/useStreams'
 import { CATS, slugify } from '../services/api'
@@ -13,6 +13,9 @@ const {
   filtered, liveRows, upcomingRows, endedRows, load,
 } = useStreams()
 
+// pagination: tampilkan 12 card per section, load more saat klik
+const visibleCounts = ref({ live: 12, upcoming: 12, ended: 12 })
+
 const sections = computed(() => {
   const out = []
   if (liveRows.value.length) out.push({ key: 'live', title: 'Sedang Live', list: liveRows.value, emoji: '🔴' })
@@ -22,8 +25,7 @@ const sections = computed(() => {
 })
 
 function goWatch(m) {
-  const slug = slugify(m.tag) + '-' + rows.value.indexOf(m)
-  router.push('/watch/' + slug)
+  router.push('/watch/' + m.slug)
 }
 </script>
 
@@ -88,13 +90,20 @@ function goWatch(m) {
           </div>
           <div class="event-grid">
             <EventCard
-              v-for="(m, i) in sec.list"
+              v-for="(m, i) in sec.list.slice(0, (visibleCounts[sec.key] || 12))"
               :key="slugify(m.tag) + '-' + i"
               :match="m"
               :index="rows.indexOf(m)"
               @open="goWatch"
             />
           </div>
+          <button
+            v-if="sec.list.length > (visibleCounts[sec.key] || 12)"
+            class="load-more"
+            @click="visibleCounts[sec.key] = (visibleCounts[sec.key] || 12) + 12"
+          >
+            Lihat lebih banyak ({{ sec.list.length - (visibleCounts[sec.key] || 12) }} lagi) ↓
+          </button>
         </div>
       </template>
     </section>
@@ -301,4 +310,11 @@ function goWatch(m) {
     font-size: 11px;
   }
 }
+.load-more {
+  display: block; margin: 16px auto 0; padding: 10px 20px;
+  border: 1px solid var(--line2); border-radius: 10px;
+  background: var(--surface); color: var(--muted2);
+  font-size: 13px; font-weight: 600; transition: 0.15s;
+}
+.load-more:hover { border-color: var(--accent); color: var(--accent); }
 </style>

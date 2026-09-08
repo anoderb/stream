@@ -8,7 +8,7 @@ const router = useRouter()
 const { upcomingRows, loading } = useStreams()
 
 function goWatch(m) {
-  router.push('/watch/' + slugify(m.tag) + '-' + upcomingRows.value.indexOf(m))
+  router.push('/watch/' + m.slug)
 }
 </script>
 

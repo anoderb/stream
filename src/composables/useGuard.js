@@ -11,6 +11,7 @@ export const BLOCKED = [
   // domain blacklist spesifik
   'bossmahjong2.games', 'tonicgoverness.com', 'exclusive-spin.com',
   'omg10.com', 'ay267.com', 'pragmaticplay.net', 'hacksaw.gaming',
+  'mobiletracking.ru', 'tracker.mobiletracking.ru',
 ]
 
 export const isBlocked = url => BLOCKED.some(k => (url || '').toLowerCase().includes(k))

@@ -60,12 +60,28 @@ export function useStreams() {
       const s = Math.ceil((COOLDOWN - (now - lastFetch.value)) / 1000)
       return { cooldown: s }
     }
+
+    // === cache: pakai sessionStorage biar reload cepat (anti-buffer) ===
+    if (!rows.value.length) {
+      try {
+        const cached = sessionStorage.getItem('nobaryu-cache')
+        if (cached) {
+          rows.value = JSON.parse(cached)
+          loading.value = false
+          lastUpdate.value = new Date()
+        }
+      } catch { /* noop */ }
+    }
+
     lastFetch.value = now
     if (!loading.value) updating.value = true
+
     try {
       rows.value = await fetchStreams()
       lastUpdate.value = new Date()
       error.value = null
+      // simpan ke cache (anti-buffer: reload gak perlu refetch)
+      try { sessionStorage.setItem('nobaryu-cache', JSON.stringify(rows.value)) } catch { /* quota */ }
       return { ok: true }
     } catch (e) {
       console.error(e)
@@ -95,6 +111,10 @@ export function useStreams() {
   }
 
   function findMatchBySlug(slug) {
+    // cari pakai slug API (m.slug) dulu — lebih stabil
+    let m = rows.value.find(x => x.slug === slug)
+    if (m) return m
+    // fallback: cari pakai slugify(tag)+index (lama)
     return rows.value.find((x, i) => slugify(x.tag) + '-' + i === slug) || null
   }
 

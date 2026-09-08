@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStreams } from '../composables/useStreams'
 import { useGuard } from '../composables/useGuard'
@@ -8,15 +8,17 @@ import { slugify, fmtTime, statusOf, LABEL_SHORT } from '../services/api'
 
 const router = useRouter()
 const route = useRoute()
-const { rows, findMatchBySlug } = useStreams()
+const { rows, loading, findMatchBySlug } = useStreams()
 const guard = useGuard()
 
-const match = ref(null)
 const activeIdx = ref(0)
 const frameUrl = ref('')
+const playerStarted = ref(false)
 const saved = ref(new Set(JSON.parse(localStorage.getItem('nobaryu-saved') || '[]')))
 const toast = ref('')
 
+// match = computed dari rows + route slug — auto resolve saat data arrive
+const match = computed(() => findMatchBySlug(route.params.slug))
 const servers = computed(() => match.value?.iframes || [])
 
 const otherMatches = computed(() => {
@@ -42,6 +44,8 @@ function setServer(i, remember = true) {
   }
   activeIdx.value = i
   frameUrl.value = s.url
+  // reset player saat ganti channel
+  playerStarted.value = false
   if (remember) {
     try {
       const prefs = JSON.parse(localStorage.getItem('nobaryu-server-prefs') || '{}')
@@ -62,17 +66,17 @@ function toggleSave() {
 }
 
 function goWatch(m) {
-  router.push('/watch/' + slugify(m.tag) + '-' + rows.value.indexOf(m))
+  router.push('/watch/' + m.slug)
 }
 
-function loadMatch() {
-  const m = findMatchBySlug(route.params.slug)
-  if (!m) {
-    match.value = null
-    return
-  }
-  match.value = m
-  // pilih server dari preferensi / HD-FHD pertama
+// klik play → load iframe
+function startPlayer() {
+  playerStarted.value = true
+}
+
+// init player saat match tersedia (dari loading atau route change)
+function initPlayer(m) {
+  if (!m) return
   const serversArr = m.iframes || []
   const prefs = JSON.parse(localStorage.getItem('nobaryu-server-prefs') || '{}')
   const fav = prefs[slugify(m.tag)]
@@ -86,15 +90,30 @@ function loadMatch() {
   guard.activate()
 }
 
-watch(() => route.params.slug, loadMatch)
-onMounted(loadMatch)
+watch(() => route.params.slug, () => {
+  // reset state saat pindah match
+  activeIdx.value = 0
+  frameUrl.value = ''
+  playerStarted.value = false
+})
+watch(match, (m) => {
+  if (m) initPlayer(m)
+}, { immediate: true })
 onUnmounted(() => guard.deactivate())
 
 setTimeout(() => (toast.value = ''), 3000)
 </script>
 
 <template>
-  <div v-if="!match" class="state-msg">
+  <!-- Loading skeleton — data masih ambil dari API -->
+  <div v-if="loading && !match" class="watch-loading">
+    <div class="skeleton" style="aspect-ratio: 16/9; border-radius: 18px; max-width: 100%;" />
+    <div class="skeleton" style="height: 60px; border-radius: 12px; margin-top: 14px;" />
+    <div class="skeleton" style="height: 120px; border-radius: 12px; margin-top: 14px;" />
+  </div>
+
+  <!-- Notfound — hanya kalau data sudah loaded dan match gak ada -->
+  <div v-else-if="!match" class="state-msg">
     <p>Pertandingan tidak ditemukan.</p>
     <button class="retry-link" @click="router.push('/')">← Kembali ke Beranda</button>
   </div>
@@ -102,10 +121,29 @@ setTimeout(() => (toast.value = ''), 3000)
   <div v-else class="watch-grid">
     <!-- KOLOM KIRI: player + info -->
     <div class="left-col">
-      <!-- Video player -->
+      <!-- Video player — lazy: poster dulu, iframe saat klik play -->
       <div class="player-card">
         <div class="frame-wrap">
+          <!-- Poster + tombol play sebelum iframe load -->
+          <div v-if="!playerStarted" class="poster-overlay" @click="startPlayer">
+            <img
+              v-if="match.poster"
+              :src="match.poster"
+              :alt="match.tag"
+              loading="lazy"
+              decoding="async"
+              class="poster-bg"
+              @error="$event.target.style.display='none'"
+            />
+            <div class="poster-gradient" />
+            <button class="play-btn" aria-label="Putar stream">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            <span class="poster-loading">Memuat stream…</span>
+          </div>
+          <!-- iframe hanya render setelah klik play -->
           <iframe
+            v-if="playerStarted"
             :key="frameUrl"
             :src="frameUrl || 'about:blank'"
             :title="match.tag"
@@ -238,6 +276,31 @@ setTimeout(() => (toast.value = ''), 3000)
 }
 .frame-wrap { aspect-ratio: 16/9; }
 .frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+.poster-overlay {
+  position: absolute; inset: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg2); overflow: hidden;
+}
+.poster-bg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; opacity: 0.5;
+}
+.poster-gradient {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(10,13,22,0.9), transparent 50%);
+}
+.play-btn {
+  position: relative; z-index: 2;
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--accent); color: #080b12;
+  display: flex; align-items: center; justify-content: center;
+  transition: 0.2s; box-shadow: 0 0 30px var(--accent-glow);
+}
+.play-btn:hover { transform: scale(1.1); }
+.poster-loading {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: var(--muted2); z-index: 2;
+}
 .player-badges {
   position: absolute;
   top: 12px;
@@ -392,6 +455,8 @@ setTimeout(() => (toast.value = ''), 3000)
   display: flex; flex-direction: column; align-items: center; gap: 12px;
 }
 .retry-link { color: var(--accent); font-weight: 700; background: none; border: none; cursor: pointer; }
+
+.watch-loading { padding-top: 18px; max-width: 100%; }
 
 @media (max-width: 1023px) {
   .watch-grid { grid-template-columns: 1fr; }
