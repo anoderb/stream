@@ -136,10 +136,12 @@ setTimeout(() => (toast.value = ''), 3000)
               @error="$event.target.style.display='none'"
             />
             <div class="poster-gradient" />
-            <button class="play-btn" aria-label="Putar stream">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            </button>
-            <span class="poster-loading">Memuat stream…</span>
+            <div class="poster-center">
+              <button class="play-btn" aria-label="Putar stream">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+              <span class="poster-hint">Klik untuk Memulai</span>
+            </div>
           </div>
           <!-- iframe hanya render setelah klik play -->
           <iframe
@@ -279,27 +281,32 @@ setTimeout(() => (toast.value = ''), 3000)
 .poster-overlay {
   position: absolute; inset: 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg2); overflow: hidden;
+  background: radial-gradient(ellipse at center, #1a2038 0%, var(--bg2) 70%);
+  overflow: hidden;
 }
 .poster-bg {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; opacity: 0.5;
+  object-fit: cover; opacity: 0.35;
 }
 .poster-gradient {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(10,13,22,0.9), transparent 50%);
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(10,13,22,0.7) 80%);
+}
+.poster-center {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
 }
 .play-btn {
-  position: relative; z-index: 2;
-  width: 72px; height: 72px; border-radius: 50%;
+  width: 84px; height: 84px; border-radius: 50%;
   background: var(--accent); color: #080b12;
   display: flex; align-items: center; justify-content: center;
-  transition: 0.2s; box-shadow: 0 0 30px var(--accent-glow);
+  transition: 0.2s; box-shadow: 0 0 40px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.4);
 }
-.play-btn:hover { transform: scale(1.1); }
-.poster-loading {
-  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-  font-size: 12px; color: var(--muted2); z-index: 2;
+.play-btn:hover { transform: scale(1.12); }
+.poster-hint {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  letter-spacing: 0.03em;
 }
 .player-badges {
   position: absolute;
