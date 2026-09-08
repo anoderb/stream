@@ -13,7 +13,6 @@ const guard = useGuard()
 
 const activeIdx = ref(0)
 const frameUrl = ref('')
-const playerStarted = ref(false)
 const saved = ref(new Set(JSON.parse(localStorage.getItem('nobaryu-saved') || '[]')))
 const toast = ref('')
 
@@ -44,8 +43,6 @@ function setServer(i, remember = true) {
   }
   activeIdx.value = i
   frameUrl.value = s.url
-  // reset player saat ganti channel
-  playerStarted.value = false
   if (remember) {
     try {
       const prefs = JSON.parse(localStorage.getItem('nobaryu-server-prefs') || '{}')
@@ -69,11 +66,6 @@ function goWatch(m) {
   router.push('/watch/' + m.slug)
 }
 
-// klik play → load iframe
-function startPlayer() {
-  playerStarted.value = true
-}
-
 // init player saat match tersedia (dari loading atau route change)
 function initPlayer(m) {
   if (!m) return
@@ -94,7 +86,6 @@ watch(() => route.params.slug, () => {
   // reset state saat pindah match
   activeIdx.value = 0
   frameUrl.value = ''
-  playerStarted.value = false
 })
 watch(match, (m) => {
   if (m) initPlayer(m)
@@ -121,35 +112,13 @@ setTimeout(() => (toast.value = ''), 3000)
   <div v-else class="watch-grid">
     <!-- KOLOM KIRI: player + info -->
     <div class="left-col">
-      <!-- Video player — lazy: poster dulu, iframe saat klik play -->
+      <!-- Video player -->
       <div class="player-card">
         <div class="frame-wrap">
-          <!-- Poster + tombol play sebelum iframe load -->
-          <div v-if="!playerStarted" class="poster-overlay" @click="startPlayer">
-            <img
-              v-if="match.poster"
-              :src="match.poster"
-              :alt="match.tag"
-              loading="lazy"
-              decoding="async"
-              class="poster-bg"
-              @error="$event.target.style.display='none'"
-            />
-            <div class="poster-gradient" />
-            <div class="poster-center">
-              <button class="play-btn" aria-label="Putar stream">
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              </button>
-              <span class="poster-hint">Klik untuk Memulai</span>
-            </div>
-          </div>
-          <!-- iframe hanya render setelah klik play -->
           <iframe
-            v-if="playerStarted"
             :key="frameUrl"
             :src="frameUrl || 'about:blank'"
             :title="match.tag"
-            allowfullscreen
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write"
             referrerpolicy="strict-origin-when-cross-origin"
             frameborder="0"
@@ -278,36 +247,6 @@ setTimeout(() => (toast.value = ''), 3000)
 }
 .frame-wrap { aspect-ratio: 16/9; }
 .frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
-.poster-overlay {
-  position: absolute; inset: 0; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse at center, #1a2038 0%, var(--bg2) 70%);
-  overflow: hidden;
-}
-.poster-bg {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; opacity: 0.35;
-}
-.poster-gradient {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse at center, transparent 30%, rgba(10,13,22,0.7) 80%);
-}
-.poster-center {
-  position: relative; z-index: 2;
-  display: flex; flex-direction: column; align-items: center; gap: 14px;
-}
-.play-btn {
-  width: 84px; height: 84px; border-radius: 50%;
-  background: var(--accent); color: #080b12;
-  display: flex; align-items: center; justify-content: center;
-  transition: 0.2s; box-shadow: 0 0 40px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.4);
-}
-.play-btn:hover { transform: scale(1.12); }
-.poster-hint {
-  font-size: 14px; font-weight: 600; color: var(--text);
-  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-  letter-spacing: 0.03em;
-}
 .player-badges {
   position: absolute;
   top: 12px;
